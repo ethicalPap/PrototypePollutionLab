@@ -1,0 +1,767 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prototype Pollution Learning Lab</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
+    
+    <!-- Monaco Editor -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs/loader.min.js"></script>
+    
+    <style>
+        :root {
+            --bg-color: #1e1e1e;
+            --text-color: #e0e0e0;
+            --editor-bg: #252526;
+            --editor-line: #2d2d2d;
+            --editor-text: #d4d4d4;
+            --comment-color: #6a9955;
+            --keyword-color: #569cd6;
+            --string-color: #ce9178;
+            --number-color: #b5cea8;
+            --button-color: #0e639c;
+            --button-hover: #1177bb;
+            --success-color: #4EC9B0;
+            --warning-color: #dcdcaa;
+            --error-color: #f44747;
+            --border-color: #3c3c3c;
+            --section-bg: #2d2d2d;
+            --challenge-bg: #252a33;
+            --challenge-border: #0e639c;
+            --hint-color: #569cd6;
+            --explanation-bg: #31363f;
+        }
+        
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            max-width: 900px;
+            margin: 0 auto;
+            padding: 20px;
+            line-height: 1.6;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+        }
+        
+        h1, h2, h3 {
+            color: var(--text-color);
+        }
+        
+        pre {
+            background-color: var(--editor-bg);
+            padding: 12px;
+            border-radius: 5px;
+            overflow-x: auto;
+            color: var(--editor-text);
+            border: 1px solid var(--border-color);
+        }
+        
+        code {
+            background-color: var(--editor-bg);
+            padding: 2px 4px;
+            border-radius: 3px;
+            font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+            color: var(--keyword-color);
+        }
+        
+        button {
+            padding: 8px 16px;
+            margin: 5px;
+            cursor: pointer;
+            background-color: var(--button-color);
+            color: white;
+            border: none;
+            border-radius: 4px;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            font-size: 14px;
+        }
+        
+        button:hover {
+            background-color: var(--button-hover);
+        }
+        
+        .output {
+            border: 1px solid var(--border-color);
+            background-color: var(--editor-bg);
+            padding: 12px;
+            margin-top: 10px;
+            min-height: 120px;
+            font-family: 'Fira Code', 'Consolas', 'Monaco', 'Courier New', monospace;
+            color: var(--editor-text);
+            border-radius: 4px;
+            white-space: pre-wrap;
+            line-height: 1.4;
+        }
+        
+        .section {
+            margin-bottom: 40px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 30px;
+            background-color: var(--section-bg);
+            border-radius: 8px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.3);
+        }
+        
+        .warning {
+            color: var(--error-color);
+            font-weight: bold;
+            padding: 10px;
+            border-left: 4px solid var(--error-color);
+            margin: 10px 0;
+            background-color: rgba(244, 71, 71, 0.1);
+        }
+        
+        .hint {
+            color: var(--hint-color);
+            font-style: italic;
+            margin-top: 5px;
+            padding: 8px;
+            border-left: 3px solid var(--hint-color);
+            background-color: rgba(86, 156, 214, 0.1);
+        }
+        
+        .challenge {
+            background-color: var(--challenge-bg);
+            padding: 15px;
+            border-left: 5px solid var(--challenge-border);
+            margin-bottom: 15px;
+            border-radius: 0 4px 4px 0;
+        }
+        
+        .success {
+            color: var(--success-color);
+            font-weight: bold;
+        }
+        
+        .explanation {
+            background-color: var(--explanation-bg);
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border: 1px solid var(--border-color);
+        }
+        
+        /* Editor container styling */
+        .monaco-editor-container {
+            height: 150px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            margin-bottom: 15px;
+        }
+        
+        /* Toggle switch for dark/light mode */
+        .mode-toggle {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 1000;
+        }
+        
+        .toggle-switch {
+            position: relative;
+            display: inline-block;
+            width: 60px;
+            height: 34px;
+        }
+        
+        .toggle-switch input {
+            opacity: 0;
+            width: 0;
+            height: 0;
+        }
+        
+        .slider {
+            position: absolute;
+            cursor: pointer;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background-color: #ccc;
+            transition: .4s;
+            border-radius: 34px;
+        }
+        
+        .slider:before {
+            position: absolute;
+            content: "";
+            height: 26px;
+            width: 26px;
+            left: 4px;
+            bottom: 4px;
+            background-color: white;
+            transition: .4s;
+            border-radius: 50%;
+        }
+        
+        input:checked + .slider {
+            background-color: var(--button-color);
+        }
+        
+        input:checked + .slider:before {
+            transform: translateX(26px);
+        }
+        
+        .toggle-label {
+            margin-left: 10px;
+            color: var(--text-color);
+        }
+        
+        /* Static code examples styling */
+        .static-code {
+            font-family: 'Fira Code', monospace;
+            background-color: var(--editor-bg);
+            color: var(--editor-text);
+            padding: 12px;
+            border-radius: 5px;
+            margin: 15px 0;
+            white-space: pre;
+            overflow-x: auto;
+            line-height: 1.5;
+        }
+        
+        .static-code .keyword { color: var(--keyword-color); }
+        .static-code .string { color: var(--string-color); }
+        .static-code .comment { color: var(--comment-color); }
+        .static-code .property { color: var(--number-color); }
+        .static-code .number { color: var(--number-color); }
+    </style>
+</head>
+<body>
+    <div class="mode-toggle">
+        <label class="toggle-switch">
+            <input type="checkbox" id="theme-toggle" checked>
+            <span class="slider"></span>
+        </label>
+        <span class="toggle-label">Dark Mode</span>
+    </div>
+
+    <h1>Prototype Pollution Learning Lab</h1>
+    <p>This interactive environment lets you learn about prototype pollution by writing and executing your own exploits.</p>
+    <div class="warning">Note: This is for educational purposes only. Never use these techniques on production systems.</div>
+
+    <div class="section">
+        <h2>1. JavaScript Console</h2>
+        <p>Practice direct prototype manipulation using JavaScript code:</p>
+        <div class="challenge">
+            <strong>Challenge:</strong> Pollute the Object prototype with a property called <code>isAdmin</code> that has the value <code>true</code>.
+        </div>
+        <div class="hint">Hint: Try using <code>Object.prototype.propertyName = value</code></div>
+        <div id="consoleEditor" class="monaco-editor-container"></div>
+        <div>
+            <button onclick="executeConsoleCode()">Execute Code</button>
+            <button onclick="checkConsoleResult()">Check Result</button>
+            <button onclick="resetConsole()">Reset Object Prototype</button>
+        </div>
+        <pre class="output" id="consoleOutput">Enter your code above and click Execute...</pre>
+    </div>
+
+    <div class="section">
+        <h2>2. Vulnerable Merge Function</h2>
+        <p>Here's a recursive merge function with a prototype pollution vulnerability:</p>
+        <pre class="static-code">function vulnerableMerge(target, source) {
+    for(let key in source) {
+        if(typeof source[key] === 'object' && source[key] !== null) {
+            if(!target[key]) target[key] = {};
+            vulnerableMerge(target[key], source[key]);
+        } else {
+            target[key] = source[key];
+        }
+    }
+    return target;
+}</pre>
+        <div class="challenge">
+            <strong>Challenge:</strong> Create a JSON payload that when parsed and passed to this function will pollute the prototype with <code>polluted: "fromMerge"</code>
+        </div>
+        <div id="mergeEditor" class="monaco-editor-container"></div>
+        <div>
+            <button onclick="runMergeExploit()">Test Payload</button>
+            <button onclick="checkMergeResult()">Check Result</button>
+            <button onclick="resetMerge()">Reset Object Prototype</button>
+        </div>
+        <pre class="output" id="mergeOutput">Enter your payload and click Test...</pre>
+    </div>
+
+    <div class="section">
+        <h2>3. Parameter Processing</h2>
+        <p>This application accepts user parameters and processes them insecurely:</p>
+        <pre class="static-code">function processParameters(params) {
+    let config = {};
+    
+    // Recursive merge function
+    function configMerge(target, source) {
+        for(let key in source) {
+            if(typeof source[key] === 'object' && source[key] !== null) {
+                if(!target[key]) target[key] = {};
+                configMerge(target[key], source[key]);
+            } else {
+                target[key] = source[key];
+            }
+        }
+        return target;
+    }
+    
+    return configMerge(config, params);
+}
+
+// Later in the application
+function checkAccess(user) {
+    if(user.role === 'admin' || user.isAdmin) {
+        return "ACCESS GRANTED: Admin Panel";
+    }
+    return "ACCESS DENIED: Insufficient privileges";
+}</pre>
+        <div class="challenge">
+            <strong>Challenge:</strong> Create a parameter object that will give any user admin access by polluting the prototype.
+        </div>
+        <div id="paramEditor" class="monaco-editor-container"></div>
+        <div>
+            <button onclick="testAccessBypass()">Test Access Bypass</button>
+            <button onclick="checkAccessResult()">Check User Access</button>
+            <button onclick="resetAccess()">Reset Object Prototype</button>
+        </div>
+        <pre class="output" id="accessOutput">Enter your payload and click Test...</pre>
+    </div>
+
+    <div class="section">
+        <h2>4. Practical Impact</h2>
+        <p>This section demonstrates how prototype pollution can affect real applications:</p>
+        <div class="explanation">
+            <p>Consider a simple authentication system that checks if a user is an admin:</p>
+            <pre class="static-code">function isUserAdmin(user) {
+    // This code doesn't explicitly check if isAdmin is the user's own property
+    return user.isAdmin === true;
+}
+
+const regularUser = { username: 'alice', role: 'user' };</pre>
+        </div>
+        <div>
+            <button onclick="testAdminCheck()">Test Admin Check</button>
+            <button onclick="polluteThenTest()">Pollute Then Test</button>
+            <button onclick="resetAdminCheck()">Reset</button>
+        </div>
+        <pre class="output" id="impactOutput">Click Test Admin Check to see the normal behavior...</pre>
+    </div>
+
+    <div class="section">
+        <h2>5. Mitigation Techniques</h2>
+        <p>Learn how to prevent prototype pollution in your applications:</p>
+        <div class="explanation">
+            <h3>Safe Object Creation</h3>
+            <pre class="static-code">const safeObject = Object.create(null); // No prototype!</pre>
+            
+            <h3>Proper Property Checks</h3>
+            <pre class="static-code">if (Object.hasOwnProperty.call(obj, 'property')) { /* safe check */ }</pre>
+            
+            <h3>Safe Merge Function</h3>
+            <pre class="static-code">function safeMerge(target, source) {
+    // Only iterate own properties
+    for(let key of Object.keys(source)) {
+        if(key === '__proto__' || key === 'constructor') continue;
+        
+        if(typeof source[key] === 'object' && source[key] !== null) {
+            if(!Object.prototype.hasOwnProperty.call(target, key)) {
+                target[key] = {};
+            }
+            safeMerge(target[key], source[key]);
+        } else {
+            target[key] = source[key];
+        }
+    }
+    return target;
+}</pre>
+        </div>
+        <div>
+            <button onclick="testVulnerableMerge()">Test Vulnerable Merge</button>
+            <button onclick="testSafeMerge()">Test Safe Merge</button>
+            <button onclick="resetMitigationTest()">Reset</button>
+        </div>
+        <pre class="output" id="mitigationOutput">Click Test buttons to compare results...</pre>
+    </div>
+
+    <script>
+        // Monaco Editor initialization
+        require.config({ paths: { 'vs': 'https://cdnjs.cloudflare.com/ajax/libs/monaco-editor/0.46.0/min/vs' }});
+        require(['vs/editor/editor.main'], function() {
+            // Console JavaScript editor
+            window.consoleEditor = monaco.editor.create(document.getElementById('consoleEditor'), {
+                value: [
+                    '// Write your JavaScript code here',
+                    '// Example: Object.prototype.isAdmin = true;'
+                ].join('\n'),
+                language: 'javascript',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Consolas', monospace",
+                tabSize: 2,
+                renderLineHighlight: 'all',
+                formatOnPaste: true,
+                wordWrap: 'on'
+            });
+            
+            // Merge JSON editor
+            window.mergeEditor = monaco.editor.create(document.getElementById('mergeEditor'), {
+                value: [
+                    '{',
+                    '  // Enter your payload as a JSON object',
+                    '  // Example structure (modify this):',
+                    '  "normalProperty": "normalValue",',
+                    '  "nestedProperty": {',
+                    '    "key": "value"',
+                    '  }',
+                    '}'
+                ].join('\n'),
+                language: 'json',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Consolas', monospace",
+                tabSize: 2,
+                renderLineHighlight: 'all',
+                formatOnPaste: true,
+                wordWrap: 'on'
+            });
+            
+            // Parameter JSON editor
+            window.paramEditor = monaco.editor.create(document.getElementById('paramEditor'), {
+                value: [
+                    '{',
+                    '  // Create a payload that will bypass access controls',
+                    '  // Hint: Use a special property name to access prototype',
+                    '}'
+                ].join('\n'),
+                language: 'json',
+                theme: 'vs-dark',
+                automaticLayout: true,
+                minimap: { enabled: false },
+                scrollBeyondLastLine: false,
+                fontSize: 14,
+                fontFamily: "'Fira Code', 'Consolas', monospace",
+                tabSize: 2,
+                renderLineHighlight: 'all',
+                formatOnPaste: true,
+                wordWrap: 'on'
+            });
+            
+            // Theme toggle functionality
+            const themeToggle = document.getElementById('theme-toggle');
+            const root = document.documentElement;
+            
+            // Add event listener for theme toggle
+            themeToggle.addEventListener('change', function() {
+                setTheme(this.checked);
+            });
+            
+            // Initialize theme
+            setTheme(themeToggle.checked);
+            
+            function setTheme(isDark) {
+                // Set CSS variables
+                if (isDark) {
+                    // Dark theme
+                    root.style.setProperty('--bg-color', '#1e1e1e');
+                    root.style.setProperty('--text-color', '#e0e0e0');
+                    root.style.setProperty('--editor-bg', '#252526');
+                    root.style.setProperty('--editor-line', '#2d2d2d');
+                    root.style.setProperty('--editor-text', '#d4d4d4');
+                    root.style.setProperty('--section-bg', '#2d2d2d');
+                    root.style.setProperty('--border-color', '#3c3c3c');
+                    root.style.setProperty('--challenge-bg', '#252a33');
+                    root.style.setProperty('--explanation-bg', '#31363f');
+                    document.querySelector('.toggle-label').textContent = 'Dark Mode';
+                    
+                    // Set Monaco editor theme
+                    monaco.editor.setTheme('vs-dark');
+                } else {
+                    // Light theme
+                    root.style.setProperty('--bg-color', '#ffffff');
+                    root.style.setProperty('--text-color', '#333333');
+                    root.style.setProperty('--editor-bg', '#f5f5f5');
+                    root.style.setProperty('--editor-line', '#e8e8e8');
+                    root.style.setProperty('--editor-text', '#333333');
+                    root.style.setProperty('--section-bg', '#f9f9f9');
+                    root.style.setProperty('--border-color', '#dddddd');
+                    root.style.setProperty('--challenge-bg', '#fff8e1');
+                    root.style.setProperty('--explanation-bg', '#e3f2fd');
+                    document.querySelector('.toggle-label').textContent = 'Light Mode';
+                    
+                    // Set Monaco editor theme
+                    monaco.editor.setTheme('vs');
+                }
+            }
+            
+            // Apply syntax highlighting to static code blocks
+            highlightStaticCode();
+        });
+        
+        // Helper function to display output
+        function display(elementId, content) {
+            document.getElementById(elementId).innerHTML = content;
+        }
+
+        // Helper function to check if pollution worked
+        function checkPollution(propertyName, outputId) {
+            const newObj = {};
+            if (newObj[propertyName] !== undefined) {
+                display(outputId, `SUCCESS! Prototype has been polluted.\n\nEmpty object has "${propertyName}" property: ${JSON.stringify(newObj[propertyName])}\n\nThis means ALL objects will now inherit this property.`);
+                return true;
+            } else {
+                display(outputId, `Not yet polluted. Your payload didn't add "${propertyName}" to Object.prototype.`);
+                return false;
+            }
+        }
+
+        // Console section
+        function executeConsoleCode() {
+            try {
+                const code = window.consoleEditor.getValue();
+                eval(code);
+                display("consoleOutput", "Code executed. Use 'Check Result' to verify if pollution worked.");
+            } catch (e) {
+                display("consoleOutput", "Error: " + e.message);
+            }
+        }
+
+        function checkConsoleResult() {
+            checkPollution("isAdmin", "consoleOutput");
+        }
+
+        function resetConsole() {
+            delete Object.prototype.isAdmin;
+            display("consoleOutput", "Object prototype has been reset. All pollution removed.");
+        }
+
+        // Merge function section
+        function vulnerableMerge(target, source) {
+            for(let key in source) {
+                if(typeof source[key] === 'object' && source[key] !== null) {
+                    if(!target[key]) target[key] = {};
+                    vulnerableMerge(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+            return target;
+        }
+
+        function runMergeExploit() {
+            try {
+                let inputJson = window.mergeEditor.getValue();
+                
+                // Remove comment lines
+                inputJson = inputJson.split('\n')
+                    .filter(line => !line.trim().startsWith('//'))
+                    .join('\n');
+                
+                const payload = JSON.parse(inputJson);
+                const result = vulnerableMerge({}, payload);
+                
+                display("mergeOutput", "Payload processed:\n" + 
+                       JSON.stringify(payload, null, 2) + 
+                       "\n\nResult object:\n" + 
+                       JSON.stringify(result, null, 2) + 
+                       "\n\nUse 'Check Result' to verify if pollution worked.");
+            } catch (e) {
+                display("mergeOutput", "Error: " + e.message + "\n\nMake sure your input is valid JSON.");
+            }
+        }
+
+        function checkMergeResult() {
+            checkPollution("polluted", "mergeOutput");
+        }
+
+        function resetMerge() {
+            delete Object.prototype.polluted;
+            display("mergeOutput", "Object prototype has been reset. All pollution removed.");
+        }
+
+        // Parameter processing section
+        function processParameters(params) {
+            let config = {};
+            
+            // Recursive merge function with vulnerability
+            function configMerge(target, source) {
+                for(let key in source) {
+                    if(typeof source[key] === 'object' && source[key] !== null) {
+                        if(!target[key]) target[key] = {};
+                        configMerge(target[key], source[key]);
+                    } else {
+                        target[key] = source[key];
+                    }
+                }
+                return target;
+            }
+            
+            return configMerge(config, params);
+        }
+
+        function checkAccess(user) {
+            if(user.role === 'admin' || user.isAdmin) {
+                return "ACCESS GRANTED: Admin Panel";
+            }
+            return "ACCESS DENIED: Insufficient privileges";
+        }
+
+        function testAccessBypass() {
+            try {
+                let inputJson = window.paramEditor.getValue();
+                
+                // Remove comment lines
+                inputJson = inputJson.split('\n')
+                    .filter(line => !line.trim().startsWith('//'))
+                    .join('\n');
+                
+                const payload = JSON.parse(inputJson);
+                const result = processParameters(payload);
+                
+                display("accessOutput", "Payload processed:\n" + 
+                       JSON.stringify(payload, null, 2) + 
+                       "\n\nResult configuration:\n" + 
+                       JSON.stringify(result, null, 2) + 
+                       "\n\nUse 'Check User Access' to test if the exploit worked.");
+            } catch (e) {
+                display("accessOutput", "Error: " + e.message + "\n\nMake sure your input is valid JSON.");
+            }
+        }
+
+        function checkAccessResult() {
+            const regularUser = { username: 'bob', role: 'user' };
+            const accessResult = checkAccess(regularUser);
+            
+            display("accessOutput", "Testing access with regular user:\n" + 
+                   JSON.stringify(regularUser, null, 2) + 
+                   "\n\nAccess check result: " + accessResult + 
+                   (accessResult.includes("GRANTED") ? 
+                    "\n\nSUCCESS! Your exploit worked. Regular user gained admin access." : 
+                    "\n\nNot working yet. Your payload didn't successfully pollute the prototype."));
+        }
+
+        function resetAccess() {
+            delete Object.prototype.isAdmin;
+            display("accessOutput", "Object prototype has been reset. All pollution removed.");
+        }
+
+        // Impact demonstration
+        function isUserAdmin(user) {
+            return user.isAdmin === true;
+        }
+
+        function testAdminCheck() {
+            const regularUser = { username: 'alice', role: 'user' };
+            const adminUser = { username: 'admin', role: 'admin', isAdmin: true };
+            
+            display("impactOutput", 
+                "Regular user check:\n" +
+                `isUserAdmin({ username: 'alice', role: 'user' }) → ${isUserAdmin(regularUser)}\n\n` +
+                "Admin user check:\n" +
+                `isUserAdmin({ username: 'admin', role: 'admin', isAdmin: true }) → ${isUserAdmin(adminUser)}`
+            );
+        }
+
+        function polluteThenTest() {
+            Object.prototype.isAdmin = true;
+            
+            const regularUser = { username: 'alice', role: 'user' };
+            const noProtoUser = Object.create(null);
+            noProtoUser.username = 'secure';
+            
+            display("impactOutput", 
+                "After pollution (Object.prototype.isAdmin = true):\n\n" +
+                "Regular user check:\n" +
+                `isUserAdmin({ username: 'alice', role: 'user' }) → ${isUserAdmin(regularUser)} ← VULNERABILITY!\n\n` +
+                "Object with NO prototype (safe):\n" +
+                `isUserAdmin(Object.create(null)) → ${isUserAdmin(noProtoUser)}`
+            );
+        }
+
+        function resetAdminCheck() {
+            delete Object.prototype.isAdmin;
+            display("impactOutput", "Object prototype has been reset. All pollution removed.");
+        }
+
+        // Mitigation testing
+        function testVulnerableMerge() {
+            const payload = { "__proto__": { "mitigationTest": "Prototype polluted!" } };
+            vulnerableMerge({}, payload);
+            
+            const testObj = {};
+            display("mitigationOutput", 
+                "Using vulnerable merge with payload:\n" +
+                JSON.stringify(payload, null, 2) + "\n\n" +
+                "New empty object after merge:\n" +
+                `{}.mitigationTest = "${testObj.mitigationTest}"\n\n` +
+                (testObj.mitigationTest ? "VULNERABLE: Prototype was polluted!" : "Not polluted (unexpected)")
+            );
+        }
+
+        function safeMerge(target, source) {
+            // Only iterate own properties
+            for(let key of Object.keys(source)) {
+                if(key === '__proto__' || key === 'constructor') continue;
+                
+                if(typeof source[key] === 'object' && source[key] !== null) {
+                    if(!Object.prototype.hasOwnProperty.call(target, key)) {
+                        target[key] = {};
+                    }
+                    safeMerge(target[key], source[key]);
+                } else {
+                    target[key] = source[key];
+                }
+            }
+            return target;
+        }
+
+        function testSafeMerge() {
+            const payload = { "__proto__": { "mitigationTest": "Attempt to pollute!" } };
+            safeMerge({}, payload);
+            
+            const testObj = {};
+            display("mitigationOutput", 
+                "Using safe merge with same payload:\n" +
+                JSON.stringify(payload, null, 2) + "\n\n" +
+                "New empty object after merge:\n" +
+                `{}.mitigationTest = "${testObj.mitigationTest}"\n\n` +
+                (testObj.mitigationTest ? "Still vulnerable!" : "PROTECTED: Safe merge prevented pollution")
+            );
+        }
+
+        function resetMitigationTest() {
+            delete Object.prototype.mitigationTest;
+            display("mitigationOutput", "Object prototype has been reset. All pollution removed.");
+        }
+        
+        // Apply syntax highlighting to static code blocks
+        function highlightStaticCode() {
+            let codeBlocks = document.querySelectorAll('.static-code');
+            codeBlocks.forEach(block => {
+                let html = block.innerHTML;
+                
+                // Replace keywords
+                html = html.replace(/\b(function|return|if|else|for|in|of|let|const|var|typeof|null|true|false|continue)\b/g, '<span class="keyword">$1</span>');
+                
+                // Replace strings
+                html = html.replace(/(["'])(.*?)\1/g, '<span class="string">$1$2$1</span>');
+                
+                // Replace comments
+                html = html.replace(/\/\/(.*)/g, '<span class="comment">//$1</span>');
+                
+                // Replace property access
+                html = html.replace(/\.([a-zA-Z0-9_]+)/g, '.<span class="property">$1</span>');
+                
+                // Replace numbers
+                html = html.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
+                
+                block.innerHTML = html;
+            });
+        }
+    </script>
+</body>
+</html>
