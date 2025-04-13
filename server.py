@@ -8,7 +8,7 @@ class MyHandler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         # Redirect root URL to PrototypePollution/index.html
         if self.path == '/':
-            self.path = '/PrototypePollutionLab/index.html'
+            self.path = '/src/index.html'
         return http.server.SimpleHTTPRequestHandler.do_GET(self)
 
 with socketserver.TCPServer(("", PORT), MyHandler) as httpd:
