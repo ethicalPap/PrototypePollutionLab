@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Prototype Pollution Learning Lab</title>
+    <title>Prototype Pollution, Done Ethically</title>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500;600&display=swap" rel="stylesheet">
@@ -239,8 +239,8 @@
         <span class="toggle-label">Dark Mode</span>
     </div>
 
-    <h1>Prototype Pollution Learning Lab</h1>
-    <p>This interactive environment lets you learn about prototype pollution by writing and executing your own exploits.</p>
+    <h1>Prototype Pollution, Done Ethically</h1>
+    <p>This lab is intended to allow users to learn about prototype pollution by writing and executing your own exploits.</p>
     <div class="warning">Note: This is for educational purposes only. Never use these techniques on production systems.</div>
 
     <div class="section">
@@ -249,7 +249,7 @@
         <div class="challenge">
             <strong>Challenge:</strong> Pollute the Object prototype with a property called <code>isAdmin</code> that has the value <code>true</code>.
         </div>
-        <div class="hint">Hint: Try using <code>Object.prototype.propertyName = value</code></div>
+        <div hidden class="hint">Hint: Try using <code>Object.prototype.propertyName = value</code></div>
         <div id="consoleEditor" class="monaco-editor-container"></div>
         <div>
             <button onclick="executeConsoleCode()">Execute Code</button>
@@ -389,8 +389,7 @@ const regularUser = { username: 'alice', role: 'user' };</pre>
             // Console JavaScript editor
             window.consoleEditor = monaco.editor.create(document.getElementById('consoleEditor'), {
                 value: [
-                    '// Write your JavaScript code here',
-                    '// Example: Object.prototype.isAdmin = true;'
+                    '// Write your JavaScript code here'
                 ].join('\n'),
                 language: 'javascript',
                 theme: 'vs-dark',
@@ -737,31 +736,7 @@ const regularUser = { username: 'alice', role: 'user' };</pre>
             delete Object.prototype.mitigationTest;
             display("mitigationOutput", "Object prototype has been reset. All pollution removed.");
         }
-        
-        // Apply syntax highlighting to static code blocks
-        function highlightStaticCode() {
-            let codeBlocks = document.querySelectorAll('.static-code');
-            codeBlocks.forEach(block => {
-                let html = block.innerHTML;
-                
-                // Replace keywords
-                html = html.replace(/\b(function|return|if|else|for|in|of|let|const|var|typeof|null|true|false|continue)\b/g, '<span class="keyword">$1</span>');
-                
-                // Replace strings
-                html = html.replace(/(["'])(.*?)\1/g, '<span class="string">$1$2$1</span>');
-                
-                // Replace comments
-                html = html.replace(/\/\/(.*)/g, '<span class="comment">//$1</span>');
-                
-                // Replace property access
-                html = html.replace(/\.([a-zA-Z0-9_]+)/g, '.<span class="property">$1</span>');
-                
-                // Replace numbers
-                html = html.replace(/\b(\d+)\b/g, '<span class="number">$1</span>');
-                
-                block.innerHTML = html;
-            });
-        }
+
     </script>
 </body>
 </html>

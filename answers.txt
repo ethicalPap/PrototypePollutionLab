@@ -1,0 +1,7 @@
+1. Object.prototype.isAdmin = true;
+
+
+2. {"__proto__": {"polluted": "fromMerge"}}
+
+
+3. {"__proto__": {"isAdmin": true}}
